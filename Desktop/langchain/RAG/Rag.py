@@ -84,7 +84,6 @@ def get_transcript_with_fallback(video_id):
 
 def create_enhanced_retrieval_chain(vector_store):
 
-    # Retriever with MMR (Maximum Marginal Relevance)
     retriever = vector_store.as_retriever(
         search_type="mmr",  
         search_kwargs={
@@ -94,7 +93,6 @@ def create_enhanced_retrieval_chain(vector_store):
         }
     )
     
-    # Initialize LLM
     llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
     
     prompt = PromptTemplate(
@@ -155,19 +153,16 @@ def process_video(video_url):
                 st.success("Successfully retrieved English transcript")
         
         with st.spinner("Processing transcript and creating knowledge base..."):
-            # Enhanced text splitting
             splitter = RecursiveCharacterTextSplitter(
-                chunk_size=800,  # Smaller chunks for better granularity
-                chunk_overlap=150,  # More overlap for better context
+                chunk_size=800, 
+                chunk_overlap=150, 
                 separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""],
                 length_function=len
             )
             chunks = splitter.create_documents([transcript])
             
-            # Create embeddings
             embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
             
-            # Create vector store
             vector_store = FAISS.from_documents(chunks, embeddings)
             
             st.session_state.vector_store = vector_store
@@ -180,12 +175,10 @@ def process_video(video_url):
         st.error(f"Error processing video: {str(e)}")
         return False
 
-# Streamlit UI
 def main():
     st.title("🎥 YouTube Video Q&A Assistant")
     st.markdown("Upload a YouTube video URL and ask questions about its content!")
     
-    # Sidebar for video input
     with st.sidebar:
         st.header("📹 Video Input")
         video_url = st.text_input(
@@ -202,13 +195,13 @@ def main():
                 st.error("Please enter a YouTube URL")
         
         if st.session_state.vector_store is not None:
-            st.success("✅ Video processed and ready for questions!")
+            st.success("Video processed and ready for questions!")
             if st.button("Clear Chat History"):
                 st.session_state.chat_history = []
                 st.rerun()
     
     if st.session_state.vector_store is not None:
-        st.header("💬 Ask Questions About the Video")
+        st.header("Ask Questions About the Video")
         
         for chat in st.session_state.chat_history:
             with st.chat_message("user"):
@@ -236,7 +229,7 @@ def main():
                         st.error(f"Error generating answer: {str(e)}")
     
     else:
-        st.info("👆 Please enter a YouTube URL in the sidebar to get started!")
+        st.info("Please enter a YouTube URL in the sidebar to get started!")
 
 if __name__ == "__main__":
     main()
